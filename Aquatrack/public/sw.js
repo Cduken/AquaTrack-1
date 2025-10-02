@@ -1,40 +1,41 @@
-const CACHE_NAME = 'aquatrack-v2';
+const CACHE_NAME = "aquatrack-v2";
 const urlsToCache = [
-    '/',
-    '/css/app.css',
-    '/js/app.js',
-    '/manifest.json',
+    "/",
+    "/css/app.css",
+    "/js/app.js",
+    "/manifest.json",
     // Add other assets your app needs
-    'https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap',
-    'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    "https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap",
+    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap",
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
 ];
 
-self.addEventListener('install', event => {
-    console.log('Service Worker installing...');
+self.addEventListener("install", (event) => {
+    console.log("Service Worker installing...");
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Opened cache');
+        caches
+            .open(CACHE_NAME)
+            .then((cache) => {
+                console.log("Opened cache");
                 return cache.addAll(urlsToCache);
             })
-            .catch(error => {
-                console.log('Cache addAll failed:', error);
+            .catch((error) => {
+                console.log("Cache addAll failed:", error);
             })
     );
     // Force the waiting service worker to become active
     self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-    console.log('Service Worker activating...');
+self.addEventListener("activate", (event) => {
+    console.log("Service Worker activating...");
     event.waitUntil(
-        caches.keys().then(cacheNames => {
+        caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames.map(cacheName => {
+                cacheNames.map((cacheName) => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
+                        console.log("Deleting old cache:", cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -45,57 +46,69 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener("fetch", (event) => {
     // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    if (event.request.method !== "GET") {
         return;
     }
 
-    // Skip API calls for caching (we want offline reports to be handled by the app)
-    if (event.request.url.includes('/api/')) {
+    // Skip API calls (handled by the app)
+    if (event.request.url.includes("/api/")) {
+        return;
+    }
+
+    // Skip chrome-extension and other unsupported schemes
+    if (
+        !event.request.url.startsWith("http") &&
+        !event.request.url.startsWith("https")
+    ) {
         return;
     }
 
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
+        caches.match(event.request).then((response) => {
+            if (response) {
+                return response;
+            }
 
-                // Clone the request because it's a stream that can only be consumed once
-                const fetchRequest = event.request.clone();
+            const fetchRequest = event.request.clone();
 
-                return fetch(fetchRequest).then(response => {
-                    // Check if we received a valid response
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
+            return fetch(fetchRequest)
+                .then((response) => {
+                    if (
+                        !response ||
+                        response.status !== 200 ||
+                        response.type !== "basic"
+                    ) {
                         return response;
                     }
 
-                    // Clone the response because it's a stream that can only be consumed once
                     const responseToCache = response.clone();
 
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
+                    caches
+                        .open(CACHE_NAME)
+                        .then((cache) => {
                             cache.put(event.request, responseToCache);
+                        })
+                        .catch((err) => {
+                            console.warn("Cache put failed:", err);
                         });
 
                     return response;
-                }).catch(error => {
-                    console.log('Fetch failed; returning offline page:', error);
-                    // If both cache and network fail, show a generic offline fallback
-                    if (event.request.destination === 'document') {
-                        return caches.match('/');
+                })
+                .catch((error) => {
+                    console.log("Fetch failed; returning offline page:", error);
+                    if (event.request.destination === "document") {
+                        return caches.match("/");
                     }
                 });
-            })
+        })
     );
 });
 
 // Handle messages from the client (for offline reports)
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
+self.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "SKIP_WAITING") {
         self.skipWaiting();
     }
 });

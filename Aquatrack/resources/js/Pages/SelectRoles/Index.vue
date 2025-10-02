@@ -264,7 +264,7 @@ onMounted(() => {
     gsap.set(".role-card", { y: 20, opacity: 0 });
 
     // Remove complex background animations that slow things down
-    gsap.set([".select-roles-drop-top", ".select-roles-drop-bottom"], { opacity: 0 });
+
 
     // Faster timeline with reduced duration and fewer animations
     const tl = gsap.timeline();

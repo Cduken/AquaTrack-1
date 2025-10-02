@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -16,6 +18,16 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
+        // Get total users count
+        $totalUsers = User::count();
+
+        // Calculate resolution percentage
+        $totalReports = Report::count();
+        $resolvedReports = Report::where('status', 'resolved')->count();
+        $resolutionPercentage = $totalReports > 0
+            ? round(($resolvedReports / $totalReports) * 100, 2)
+            : 0;
+
         return array_merge(parent::share($request), [
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
@@ -30,6 +42,10 @@ class HandleInertiaRequests extends Middleware
                     ...$request->user()->toArray(),
                     'avatar_url' => $request->user()->avatar_url
                 ] : null,
+            ],
+            'dashboardStats' => [
+                'total_users' => $totalUsers,
+                'resolution_percentage' => $resolutionPercentage,
             ],
         ]);
     }
