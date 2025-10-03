@@ -173,7 +173,7 @@ import {
     BiArrowRightSquare,
     BiArrowLeftSquare,
     BiStar,
-    BiArrowRepeat,
+
 } from "oh-vue-icons/icons";
 
 // Heroicons

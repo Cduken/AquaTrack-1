@@ -1,6 +1,7 @@
+//AdminLayout.vue
 <template>
     <div
-        class="antialiased min-h-screen bg-[#FFFFFF] dark:bg-gray-900 flex flex-col"
+        class="antialiased min-h-screen bg-[#FFFFFF] dark:bg-gray-900 flex flex-col font-inter"
     >
         <DashboardSidebar
             :links="adminLinks"
@@ -18,7 +19,7 @@
         />
         <main
             :class="[
-                'p-4 pt-[100px] bg-gray-100 flex-1 transition-all duration-300 ease-in-out',
+                'p-4 pt-[100px] bg-gray-100 flex-1 transition-all duration-300 ease-in-out font-inter',
                 { 'md:ml-64': isSidebarOpen, 'md:ml-16': !isSidebarOpen },
             ]"
         >
@@ -90,3 +91,11 @@ const handleLogout = () => {
     });
 };
 </script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+.font-inter {
+    font-family: 'Inter', sans-serif;
+}
+</style>
